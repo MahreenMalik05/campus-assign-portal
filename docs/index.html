@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campus Assignment Portal</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 850px;
+      margin: 35px auto;
+      padding: 20px;
+      background: #f2f5f9;
+      color: #203864;
+    }
+    form, .submission {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    label { display: block; margin-top: 12px; }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 18px;
+      padding: 11px 20px;
+      background: #203864;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .success { color: green; }
+    .error { color: #b00020; }
+  </style>
+</head>
+<body>
+  <h1>Campus Assignment Portal</h1>
+  <p>Submit your assignment details below.</p>
+
+  <p id="message" role="status"></p>
+
+  <form id="submissionForm">
+    <label for="student_name">Student Name</label>
+    <input id="student_name" required>
+
+    <label for="registration_number">Registration Number</label>
+    <input id="registration_number" required>
+
+    <label for="assignment_title">Assignment Title</label>
+    <input id="assignment_title" required>
+
+    <label for="submission_url">Submission URL</label>
+    <input id="submission_url" type="url"
+           placeholder="https://example.com/assignment" required>
+
+    <button type="submit">Submit Assignment</button>
+  </form>
+
+  <h2>Saved Submissions</h2>
+  <div id="submissions"></div>
+
+  <script>
+    const form = document.getElementById("submissionForm");
+    const message = document.getElementById("message");
+    const list = document.getElementById("submissions");
+
+    let submissions = JSON.parse(
+      localStorage.getItem("campusSubmissions") || "[]"
+    );
+
+    function renderSubmissions() {
+      list.replaceChildren();
+
+      if (submissions.length === 0) {
+        list.textContent = "No submissions yet.";
+        return;
+      }
+
+      submissions.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "submission";
+
+        [item.student_name, item.registration_number,
+         item.assignment_title, item.submission_url].forEach(value => {
+          const p = document.createElement("p");
+          p.textContent = value;
+          card.appendChild(p);
+        });
+
+        list.appendChild(card);
+      });
+    }
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+
+      const url = document.getElementById("submission_url").value.trim();
+
+      try {
+        const parsed = new URL(url);
+        if (!["http:", "https:"].includes(parsed.protocol) ||
+            !parsed.hostname.includes(".")) {
+          throw new Error("Invalid URL");
+        }
+      } catch {
+        message.className = "error";
+        message.textContent = "Please enter a valid HTTP or HTTPS URL.";
+        return;
+      }
+
+      const item = {
+        student_name: document.getElementById("student_name").value.trim(),
+        registration_number:
+          document.getElementById("registration_number").value.trim(),
+        assignment_title:
+          document.getElementById("assignment_title").value.trim(),
+        submission_url: url
+      };
+
+      submissions.push(item);
+      localStorage.setItem("campusSubmissions", JSON.stringify(submissions));
+
+      message.className = "success";
+      message.textContent = "Assignment submitted successfully!";
+      form.reset();
+      renderSubmissions();
+    });
+
+    renderSubmissions();
+  </script>
+</body>
+</html>
