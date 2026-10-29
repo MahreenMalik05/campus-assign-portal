@@ -26,6 +26,53 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
+          python -m pip install pytest-json-report
 
       - name: Run automated tests
-        run: python -m pytest -v
+        id: pytest
+        continue-on-error: true
+        run: python -m pytest -v --json-report --json-report-file=pytest-report.json
+
+      - name: Send test report to local receiver
+        if: always()
+        shell: powershell
+        run: |
+          $testExitCode = "${{ steps.pytest.outcome }}" -eq "success"
+          $reportPath = "pytest-report.json"
+
+          if (Test-Path $reportPath) {
+            $pytestReport = Get-Content $reportPath -Raw | ConvertFrom-Json
+            $summary = $pytestReport.summary
+            $passed = if ($summary.passed) { $summary.passed } else { 0 }
+            $failed = if ($summary.failed) { $summary.failed } else { 0 }
+            $errors = if ($summary.error) { $summary.error } else { 0 }
+            $skipped = if ($summary.skipped) { $summary.skipped } else { 0 }
+
+            $body = @{
+              status = if ($testExitCode) { "SUCCESS" } else { "FAILURE" }
+              repository = "${{ github.repository }}"
+              workflow = "${{ github.workflow }}"
+              run_id = "${{ github.run_id }}"
+              run_number = "${{ github.run_number }}"
+              branch = "${{ github.ref_name }}"
+              test_result = "$passed passed, $failed failed, $errors errors, $skipped skipped"
+              tests_passed = $passed
+              tests_failed = $failed
+              tests_errors = $errors
+              tests_skipped = $skipped
+            } | ConvertTo-Json -Depth 5
+
+            try {
+              Invoke-RestMethod -Uri "http://127.0.0.1:5001/report" -Method Post -ContentType "application/json" -Body $body
+            } catch {
+              Write-Error "Could not send report to local receiver: $_"
+              exit 1
+            }
+          } else {
+            Write-Error "pytest-report.json was not generated."
+            exit 1
+          }
+
+      - name: Fail job if tests failed
+        if: steps.pytest.outcome != 'success'
+        run: exit 1
