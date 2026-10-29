@@ -63,6 +63,3 @@ def test_invalid_submission_url_is_rejected(client):
     assert b"valid HTTP or HTTPS URL" in response.data
     assert len(submissions) == 0
 
-
-def test_temporary_email_failure_check():
-    assert 1 == 2
