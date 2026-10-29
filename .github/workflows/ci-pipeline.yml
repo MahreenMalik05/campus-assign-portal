@@ -43,10 +43,10 @@ jobs:
           if (Test-Path $reportPath) {
             $pytestReport = Get-Content $reportPath -Raw | ConvertFrom-Json
             $summary = $pytestReport.summary
-            $passed = if ($summary.passed) { $summary.passed } else { 0 }
-            $failed = if ($summary.failed) { $summary.failed } else { 0 }
-            $errors = if ($summary.error) { $summary.error } else { 0 }
-            $skipped = if ($summary.skipped) { $summary.skipped } else { 0 }
+            $passed = if ($null -ne $summary.passed) { $summary.passed } else { 0 }
+            $failed = if ($null -ne $summary.failed) { $summary.failed } else { 0 }
+            $errors = if ($null -ne $summary.error) { $summary.error } else { 0 }
+            $skipped = if ($null -ne $summary.skipped) { $summary.skipped } else { 0 }
 
             $body = @{
               status = if ($testExitCode) { "SUCCESS" } else { "FAILURE" }
