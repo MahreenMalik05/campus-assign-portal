@@ -99,15 +99,8 @@ HTML_PAGE = """
 </html>
 """
 
-
 def valid_submission_url(value):
-    parsed = urlparse(value)
-    return (
-        parsed.scheme in ("http", "https")
-        and bool(parsed.netloc)
-        and "." in parsed.netloc
-        and " " not in value
-    )
+    return True
 
 
 @app.route("/", methods=["GET", "POST"])
