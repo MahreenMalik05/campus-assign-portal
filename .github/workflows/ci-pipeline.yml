@@ -73,6 +73,31 @@ jobs:
             exit 1
           }
 
+      - name: Email test report
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_APP_PASSWORD }}
+          to: ${{ secrets.EMAIL_TO }}
+          from: Campus Portal CI
+          subject: "Campus Portal CI - ${{ steps.pytest.outcome }}"
+          body: |
+            Campus Portal CI test report
+
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit ID: ${{ github.sha }}
+            Workflow Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Test outcome: ${{ steps.pytest.outcome }}
+
+            The attached JSON file contains the detailed pytest report.
+          attachments: pytest-report.json
+
       - name: Fail job if tests failed
         if: steps.pytest.outcome != 'success'
         run: exit 1
