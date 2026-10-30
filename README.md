@@ -50,8 +50,6 @@ Clone the repository:
 
 git clone https://github.com/MahreenMalik05/campus-assign-portal
 
-cd YOUR\_REPOSITORY\_FOLDER
-
 ```
 
 
